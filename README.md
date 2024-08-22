@@ -87,3 +87,7 @@ Video Template Example
 ## Resources
 - Eleventy Documentation
 - YouTube API
+
+## Future dev
+✗ change "thmb" to choose between 0~3 thumbnails
+✗ direct interface with Image plugin
