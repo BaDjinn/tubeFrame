@@ -27,7 +27,7 @@ Embedding the Video
 To embed a YouTube video, use the shortcode with the video URL:
 
 ```html
-{% tubeFrame "https://www.youtube.com/embed/tgbNymZ7vqY" %}
+{% tubeFrame "https://www.youtube.com/embed/mfhBM_Yay6w" %}
 ```
 
 ### Displaying the Thumbnail
@@ -35,7 +35,7 @@ To embed a YouTube video, use the shortcode with the video URL:
 If you prefer to display only the video thumbnail, you can add the thmb option:
 
 ```html
-{% tubeFrame "https://www.youtube.com/embed/tgbNymZ7vqY" "thmb" %}
+{% tubeFrame "https://www.youtube.com/embed/mfhBM_Yay6w" "thmb" %}
 ```
 
 In this case, tubeFrame will download the video thumbnail and display it as an image instead of directly embedding the video.
@@ -63,7 +63,7 @@ Video Template Example
 </head>
 <body>
   <h1>My YouTube Video</h1>
-  {% tubeFrame "https://www.youtube.com/embed/tgbNymZ7vqY" %}
+  {% tubeFrame "https://www.youtube.com/embed/mfhBM_Yay6w" %}
 </body>
 </html>
 
@@ -79,7 +79,7 @@ Video Template Example
 </head>
 <body>
   <h1>Video Thumbnail</h1>
-  {% tubeFrame "https://www.youtube.com/embed/tgbNymZ7vqY" "thmb" %}
+  {% tubeFrame "https://www.youtube.com/embed/mfhBM_Yay6w" "thmb" %}
 </body>
 </html>
 
