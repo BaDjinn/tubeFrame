@@ -19,4 +19,71 @@ module.exports = function (eleventyConfig) {
   // Other configurations
 };
 ```
+## Usage
 
+Once configured, you can use the tubeFrame shortcode in your Nunjucks templates to embed YouTube videos. Here are some usage examples:
+Embedding the Video
+
+To embed a YouTube video, use the shortcode with the video URL:
+
+```html
+{% tubeFrame "https://www.youtube.com/embed/tgbNymZ7vqY" %}
+```
+
+### Displaying the Thumbnail
+
+If you prefer to display only the video thumbnail, you can add the thmb option:
+
+```html
+{% tubeFrame "https://www.youtube.com/embed/tgbNymZ7vqY" "thmb" %}
+```
+
+In this case, tubeFrame will download the video thumbnail and display it as an image instead of directly embedding the video.
+
+## Configuration
+
+The tubeFrame module supports the following parameters:
+- src (Required): The URL of the YouTube video.
+- thmb (Optional): If specified, shows the video thumbnail instead of embedding the video.
+
+## License
+
+This project is licensed under the MIT License.
+## Examples
+
+Here are some examples of how the tubeFrame module can be used in an Eleventy project:
+Video Template Example
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Example</title>
+</head>
+<body>
+  <h1>My YouTube Video</h1>
+  {% tubeFrame "https://www.youtube.com/embed/tgbNymZ7vqY" %}
+</body>
+</html>
+
+```
+## Thumbnail Template Example
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Thumbnail Example</title>
+</head>
+<body>
+  <h1>Video Thumbnail</h1>
+  {% tubeFrame "https://www.youtube.com/embed/tgbNymZ7vqY" "thmb" %}
+</body>
+</html>
+
+```
+## Resources
+- Eleventy Documentation
+- YouTube API
