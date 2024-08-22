@@ -4,6 +4,12 @@ tubeFrame is a JavaScript module for Eleventy that handles YouTube embedding and
 ## Installation
 
 To use tubeFrame, follow these steps:
+- Install
+```node
+npm install path
+npm install fs
+npm install node-fetch
+```
 - Create a folder for your shortcodes: For example, /src/shortcodes.
 - Download or copy the tubeFrame.js file into the created folder.
 - Configure Eleventy to use tubeFrame:
