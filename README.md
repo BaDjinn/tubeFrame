@@ -33,7 +33,17 @@ Embedding the Video
 To embed a YouTube video, use the shortcode with the video URL:
 
 ```html
-{% tubeFrame "https://www.youtube.com/embed/mfhBM_Yay6w" %}
+{% tubeFrame "https://www.youtube.com/watch?v=dQw4w9WgXcQ" %}
+```
+
+// Esempio di utilizzo con una directory di output personalizzata e una base directory diversa
+const tubeFrame = require('./src/shorthands/tubeFrame');
+
+```javascript
+(async () => {
+  const html = await tubeFrame('https://www.youtube.com/watch?v=dQw4w9WgXcQ', true, './images/thumbnails', process.cwd());
+  console.log(html);
+})();
 ```
 
 ### Displaying the Thumbnail
