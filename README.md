@@ -30,18 +30,26 @@ module.exports = function (eleventyConfig) {
 Once configured, you can use the tubeFrame shortcode in your Nunjucks templates to embed YouTube videos. Here are some usage examples:
 Embedding the Video
 
+ ```@param {string} src``` - YouTube video id (es. dQw4w9WgXcQ).
+ ```@param {string} [thmb]``` - If ```TRUE``` returns only the video's thumbnail.
+ ```@param {string} [outputDir="./public/assets/images"]``` - Output directory for the downloaded images.
+ ```@param {string} [baseDir=__dirname]``` - Root directory.
+ ```@returns {Promise<string>}``` - HTML snippet.
+
+
 To embed a YouTube video, use the shortcode with the video URL:
 
 ```html
-{% tubeFrame "https://www.youtube.com/watch?v=dQw4w9WgXcQ" %}
+{% tubeFrame "dQw4w9WgXcQ", true, "./custom/images/thumbnails", "./src" %}
+
 ```
 
-// Esempio di utilizzo con una directory di output personalizzata e una base directory diversa
+```javascript
 const tubeFrame = require('./src/shorthands/tubeFrame');
 
-```javascript
+
 (async () => {
-  const html = await tubeFrame('https://www.youtube.com/watch?v=dQw4w9WgXcQ', true, './images/thumbnails', process.cwd());
+  const html = await tubeFrame('dQw4w9WgXcQ', true, './images/thumbnails', process.cwd());
   console.log(html);
 })();
 ```
