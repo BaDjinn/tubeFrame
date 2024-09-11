@@ -1,98 +1,65 @@
+
 # tubeFrame
 
 tubeFrame is a JavaScript module for Eleventy that handles YouTube embedding and thumbnail management. It can be used to easily embed YouTube videos into your projects, with support for displaying thumbnails as static images when you don't want the video to be directly playable.
+
 ## Installation
 
 To use tubeFrame, follow these steps:
-- Install
-```node
-npm install path
-npm install fs
-npm install node-fetch
-```
-- Create a folder for your shortcodes: For example, /src/shortcodes.
-- Download or copy the tubeFrame.js file into the created folder.
-- Configure Eleventy to use tubeFrame:
-- Include the module in your .eleventy.js file:
-```javascript
-const tubeFrame = require("./src/shortcodes/tubeFrame");
 
-module.exports = function (eleventyConfig) {
-  // Other shortcodes and configurations
+- Install the necessary dependencies:
+  ```bash
+  npm install path fs undici @11ty/eleventy-img
+  ```
+  
+- Create a folder for your shortcodes, for example `/src/shortcodes`.
 
-  eleventyConfig.addNunjucksAsyncShortcode("tubeFrame", tubeFrame);
+- Download or copy the `tubeFrame.js` file into the created folder.
 
-  // Other configurations
-};
-```
+- Configure Eleventy to use tubeFrame by including the module in your `.eleventy.js` file:
+  
+  ```javascript
+  const tubeFrame = require("./src/shortcodes/tubeFrame");
+
+  module.exports = function (eleventyConfig) {
+    // Other shortcodes and configurations
+    eleventyConfig.addNunjucksAsyncShortcode("tubeFrame", tubeFrame);
+
+    // Other configurations
+  };
+  ```
+
 ## Usage
 
-Once configured, you can use the tubeFrame shortcode in your Nunjucks templates to embed YouTube videos. Here are some usage examples:
-Embedding the Video
+Once configured, you can use the tubeFrame shortcode in your Nunjucks templates to embed YouTube videos or display thumbnails. Below are some usage examples.
 
-- ```@param {string} src``` - YouTube video id (es. dQw4w9WgXcQ).
-- ```@param {string} [thmb]``` - If ```TRUE``` returns only the video's thumbnail.
-- ```@param {string} [outputDir="./public/assets/images"]``` - Output directory for the downloaded images.
-- ```@param {string} [baseDir=__dirname]``` - Root directory.
-- ```@returns {Promise<string>}``` - HTML snippet.
+### Embedding the Video
 
+- `@param {string} videoId` - YouTube video ID (e.g., `dQw4w9WgXcQ`).
+- `@param {boolean} [thmb=false]` - If `true`, returns only the video's thumbnail.
+- `@param {string} [outputDir="./public/assets/images"]` - Output directory for the downloaded images.
+- `@param {string} [baseDir=__dirname]` - Root directory for resolving paths.
+- `@returns {Promise<string>}` - HTML snippet.
 
-To embed a YouTube video, use the shortcode with the video URL:
+#### Example:
 
 ```html
-{% tubeFrame "dQw4w9WgXcQ", true, "./custom/images/thumbnails", "./src" %}
-
+{% tubeFrame "dQw4w9WgXcQ", false, "./custom/images/thumbnails", "./src" %}
 ```
 
-```javascript
-const tubeFrame = require('./src/shorthands/tubeFrame');
-
-
-(async () => {
-  const html = await tubeFrame('dQw4w9WgXcQ', true, './images/thumbnails', process.cwd());
-  console.log(html);
-})();
-```
+This will embed the YouTube video directly into your template.
 
 ### Displaying the Thumbnail
 
-If you prefer to display only the video thumbnail, you can add the thmb option:
+If you prefer to display only the video thumbnail, set the `thmb` option to `true`:
 
 ```html
-{% tubeFrame "https://www.youtube.com/embed/mfhBM_Yay6w" "thmb" %}
+{% tubeFrame "dQw4w9WgXcQ", true, "./custom/images/thumbnails", "./src" %}
 ```
 
-In this case, tubeFrame will download the video thumbnail and display it as an image instead of directly embedding the video.
+In this case, tubeFrame will download the video thumbnail and generate multiple versions of the image (in different formats and sizes), which will be displayed as static images instead of embedding the video.
 
-## Configuration
-
-The tubeFrame module supports the following parameters:
-- src (Required): The URL of the YouTube video.
-- thmb (Optional): If specified, shows the video thumbnail instead of embedding the video.
-
-## License
-
-This project is licensed under the MIT License.
-## Examples
-
-Here are some examples of how the tubeFrame module can be used in an Eleventy project:
-Video Template Example
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Video Example</title>
-</head>
-<body>
-  <h1>My YouTube Video</h1>
-  {% tubeFrame "https://www.youtube.com/embed/mfhBM_Yay6w" %}
-</body>
-</html>
-
-```
-## Thumbnail Template Example
+#### Example in a Nunjucks Template:
 
 ```html
 <!DOCTYPE html>
@@ -103,15 +70,54 @@ Video Template Example
 </head>
 <body>
   <h1>Video Thumbnail</h1>
-  {% tubeFrame "https://www.youtube.com/embed/mfhBM_Yay6w" "thmb" %}
+  {% tubeFrame "dQw4w9WgXcQ", true %}
 </body>
 </html>
-
 ```
-## Resources
-- Eleventy Documentation
-- YouTube API
 
-## Future dev
-✗ change "thmb" to choose between 0~3 thumbnails
-✗ direct interface with Image plugin
+### Configuration Parameters
+
+The tubeFrame module supports the following parameters:
+
+- **videoId (Required):** The ID of the YouTube video.
+- **thmb (Optional):** If `true`, shows the video thumbnail instead of embedding the video.
+- **outputDir (Optional):** The directory where the thumbnails will be saved (defaults to `"./public/assets/images"`).
+- **baseDir (Optional):** The base directory of the project (defaults to the current working directory).
+
+### Node.js Example
+
+If you want to use tubeFrame in a Node.js script:
+
+```javascript
+const tubeFrame = require('./src/shortcodes/tubeFrame');
+
+(async () => {
+  const html = await tubeFrame('dQw4w9WgXcQ', true, './images/thumbnails', process.cwd());
+  console.log(html);
+})();
+```
+
+### Example: Embedding a Video
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Example</title>
+</head>
+<body>
+  <h1>My YouTube Video</h1>
+  {% tubeFrame "dQw4w9WgXcQ" %}
+</body>
+</html>
+```
+
+## License
+
+This project is licensed under the MIT License.
+
+## Future Development
+
+- Change `thmb` option to allow choosing between different YouTube thumbnail resolutions (e.g., 0-3).
+- Direct integration with more advanced features of the Eleventy Image plugin ✓
