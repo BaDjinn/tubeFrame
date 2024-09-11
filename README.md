@@ -44,7 +44,7 @@ Once configured, you can use the tubeFrame shortcode in your Nunjucks templates 
 #### Example:
 
 ```html
-{% tubeFrame "dQw4w9WgXcQ", false, "./custom/images/thumbnails", "./src" %}
+{% tubeFrame "dQw4w9WgXcQ", false %}
 ```
 
 This will embed the YouTube video directly into your template.
@@ -81,8 +81,8 @@ The tubeFrame module supports the following parameters:
 
 - **videoId (Required):** The ID of the YouTube video.
 - **thmb (Optional):** If `true`, shows the video thumbnail instead of embedding the video.
-- **outputDir (Optional):** The directory where the thumbnails will be saved (defaults to `"./public/assets/images"`).
-- **baseDir (Optional):** The base directory of the project (defaults to the current working directory).
+- **outputDir (Optional):** The directory where the thumbnails will be saved (defaults to `"./public/assets/images"`). Not used with thmb=false.
+- **baseDir (Optional):** The base directory of the project (defaults to the current working directory). Not used with thmb=false.
 
 ### Node.js Example
 
@@ -119,5 +119,6 @@ This project is licensed under the MIT License.
 
 ## Future Development
 
-- Change `thmb` option to allow choosing between different YouTube thumbnail resolutions (e.g., 0-3).
 - Direct integration with more advanced features of the Eleventy Image plugin ✓
+- Change `thmb` option to allow choosing between different YouTube thumbnail resolutions (e.g., 0-3).
+- If *maxresolution* doesn't exist download *default* thumbnail.
