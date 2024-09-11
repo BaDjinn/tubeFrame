@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs").promises;
 const { fetch } = require("undici");
+const Image = require("@11ty/eleventy-img");
 
 /**
  * Scarica la thumbnail del video YouTube se non esiste già.
@@ -33,29 +34,45 @@ async function downloadThumbnail(videoId, outputDir) {
 /**
  * Shortcode per iframe di YouTube o thumbnail.
  * @param {string} videoId - ID del video YouTube.
- * @param {boolean} [thmb] - Se true, mostra la thumbnail invece dell'iframe.
+ * @param {boolean} [thmb=false] - Se true, mostra la thumbnail invece dell'iframe.
  * @param {string} [outputDir="./public/assets/images"] - Directory di output per le immagini.
  * @param {string} [baseDir=__dirname] - Directory base del progetto.
  * @returns {Promise<string>} - HTML per visualizzare il video o la thumbnail.
  */
-async function tubeFrame(videoId, thmb = false, outputDir = "./public/assets/images", baseDir = __dirname) {
+async function tubeFrame(videoId, thmb = false, outputDir = "../public/assets/images", baseDir = __dirname) {
   const resolvedOutputDir = path.resolve(baseDir, outputDir);
 
   if (thmb) {
     let thumbnailSrc;
     try {
       thumbnailSrc = await downloadThumbnail(videoId, resolvedOutputDir);
+
+      // Genera diverse versioni dell'immagine usando EleventyImage
+      let metadata = await Image(thumbnailSrc, {
+        widths: [300, 800, null],
+        formats: ["avif", "jpeg"],
+        urlPath: "/assets/images",
+        outputDir: "public/assets/images/",
+      });
+
+      let imageAttributes = {
+        alt: `Video ${videoId} Thumbnail`,
+        sizes: "(max-width: 1280px) 100vw, 1280px",
+        style: "width: 100%; max-width: 420px;"
+      };
+
+      // Genera l'HTML usando le versioni delle immagini generate
+      let imageHtml = Image.generateHTML(metadata, imageAttributes);
+
+      return `
+        <section class="youtubeFrame">
+          ${imageHtml}
+        </section>
+      `;
     } catch (error) {
       console.error("Errore nel download della thumbnail:", error);
       return `<p>Immagine di anteprima non disponibile.</p>`;
     }
-
-    const relativeThumbnailPath = path.relative(baseDir, thumbnailSrc);
-    return `
-      <section class="youtubeFrame">
-        <img src="${relativeThumbnailPath}" alt="Video Thumbnail" style="width: 100%; max-width: 420px;">
-      </section>
-    `;
   } else {
     const videoUrl = `https://www.youtube.com/embed/${videoId}`;
     return `
