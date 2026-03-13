@@ -120,5 +120,5 @@ This project is licensed under the MIT License.
 ## Future Development
 
 - Direct integration with more advanced features of the Eleventy Image plugin ✓
-- Change `thmb` option to allow choosing between different YouTube thumbnail resolutions (e.g., 0-3).
-- If *maxresolution* doesn't exist download *default* thumbnail.
+- Change `thmb` option to allow choosing between different YouTube thumbnail resolutions (e.g., 0-3).✗
+- If *maxresolution* doesn't exist download *default* thumbnail.✓-sort of...implemented fallback
