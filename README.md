@@ -1,124 +1,136 @@
-
 # tubeFrame
 
-tubeFrame is a JavaScript module for Eleventy that handles YouTube embedding and thumbnail management. It can be used to easily embed YouTube videos into your projects, with support for displaying thumbnails as static images when you don't want the video to be directly playable.
+### *A YouTube embed + smart thumbnail generator for Eleventy*
 
-## Installation
+`tubeFrame` is an Eleventy shortcode that lets you embed YouTube videos or display their thumbnails as optimized static images.\
+Compared to a standard iframe embed, it offers better **performance**, **privacy**, **responsiveness**, and **SEO/a11y**.
 
-To use tubeFrame, follow these steps:
+This module supports:
 
-- Install the necessary dependencies:
-  ```bash
-  npm install path fs undici @11ty/eleventy-img
-  ```
-  
-- Create a folder for your shortcodes, for example `/src/shortcodes`.
+*   ✔ YouTube **video ID** input (e.g. `dQw4w9WgXcQ`)
+*   ✔ **Smart thumbnail fallback** (maxres → sd → hq → mq)
+*   ✔ Thumbnail optimization via **@11ty/eleventy-img**
+*   ✔ Responsive `<picture>` output (AVIF + JPEG)
+*   ✔ Lazy-loading and decoding optimization
+*   ✔ Privacy‑friendly embeds via `youtube-nocookie.com`
+*   ✔ Accessible iframe markup (`title`, `allow`, `referrerpolicy`, etc.)
 
-- Download or copy the `tubeFrame.js` file into the created folder.
+***
 
-- Configure Eleventy to use tubeFrame by including the module in your `.eleventy.js` file:
-  
-  ```javascript
-  const tubeFrame = require("./src/shortcodes/tubeFrame");
+# Installation
 
-  module.exports = function (eleventyConfig) {
-    // Other shortcodes and configurations
-    eleventyConfig.addNunjucksAsyncShortcode("tubeFrame", tubeFrame);
+Install required dependencies:
 
-    // Other configurations
-  };
-  ```
+```bash
+npm install @11ty/eleventy-img undici path fs
+```
 
-## Usage
+Create (if not already present) a folder for your Eleventy shortcodes:
 
-Once configured, you can use the tubeFrame shortcode in your Nunjucks templates to embed YouTube videos or display thumbnails. Below are some usage examples.
+    /src/shortcodes/
 
-### Embedding the Video
+Then download/copy `tubeFrame.js` into that folder.
 
-- `@param {string} videoId` - YouTube video ID (e.g., `dQw4w9WgXcQ`).
-- `@param {boolean} [thmb=false]` - If `true`, returns only the video's thumbnail.
-- `@param {string} [outputDir="./public/assets/images"]` - Output directory for the downloaded images.
-- `@param {string} [baseDir=__dirname]` - Root directory for resolving paths.
-- `@returns {Promise<string>}` - HTML snippet.
+***
 
-#### Example:
+# Eleventy Configuration
 
-```html
+Add the shortcode inside your `.eleventy.js` config:
+
+```js
+const tubeFrame = require("./src/shortcodes/tubeFrame");
+
+module.exports = function (eleventyConfig) {
+  eleventyConfig.addNunjucksAsyncShortcode("tubeFrame", tubeFrame);
+
+  // your other config...
+};
+```
+
+***
+
+# Usage
+
+## Embed a YouTube video (iframe mode)
+
+```njk
 {% tubeFrame "dQw4w9WgXcQ", false %}
 ```
 
-This will embed the YouTube video directly into your template.
+Produces a responsive, privacy‑enhanced `<iframe>`:
 
-### Displaying the Thumbnail
+*   Uses `https://www.youtube-nocookie.com/`
+*   Has lazy loading
+*   Has a descriptive title
+*   Includes strict `referrerpolicy`
+*   Uses 16:9 responsive aspect ratio
 
-If you prefer to display only the video thumbnail, set the `thmb` option to `true`:
+***
 
-```html
-{% tubeFrame "dQw4w9WgXcQ", true, "./custom/images/thumbnails", "./src" %}
+## Display only the thumbnail (static mode)
+
+```njk
+{% tubeFrame "dQw4w9WgXcQ", true %}
 ```
 
-In this case, tubeFrame will download the video thumbnail and generate multiple versions of the image (in different formats and sizes), which will be displayed as static images instead of embedding the video.
+This will:
 
-#### Example in a Nunjucks Template:
+1.  Validate the video ID
+2.  Try multiple thumbnail URLs (maxres → sd → hq → mq)
+3.  Use the first available
+4.  Optimize it via `@11ty/eleventy-img`
+5.  Output a `<picture>` element with AVIF/JPEG sources, lazy‑loaded and responsive
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Thumbnail Example</title>
-</head>
-<body>
-  <h1>Video Thumbnail</h1>
-  {% tubeFrame "dQw4w9WgXcQ", true %}
-</body>
-</html>
+Image output destination:
+
+    public/assets/images/
+
+***
+
+## Optional parameters
+
+You can pass an optional configuration object as third parameter:
+
+```njk
+{% tubeFrame "dQw4w9WgXcQ", true, { sizes: "(max-width: 600px) 100vw, 50vw" } %}
 ```
 
-### Configuration Parameters
+| Param     | Type      | Default                   | Description                                    |
+| --------- | --------- | ------------------------- | ---------------------------------------------- |
+| `videoId` | `string`  | required                  | YouTube video ID (11 chars)                    |
+| `thmb`    | `boolean` | `false`                   | If `true`, outputs thumbnail instead of iframe |
+| `sizes`   | `string`  | standard responsive sizes | `<img>`/`<picture>` `sizes` attribute          |
 
-The tubeFrame module supports the following parameters:
+***
 
-- **videoId (Required):** The ID of the YouTube video.
-- **thmb (Optional):** If `true`, shows the video thumbnail instead of embedding the video.
-- **outputDir (Optional):** The directory where the thumbnails will be saved (defaults to `"./public/assets/images"`). Not used with thmb=false.
-- **baseDir (Optional):** The base directory of the project (defaults to the current working directory). Not used with thmb=false.
+# How it works (technical)
 
-### Node.js Example
+*   Validates the video ID using:\
+    `/^[a-zA-Z0-9_-]{11}$/`
+*   Thumbnail mode tries URLs like:
+    *   `maxresdefault.jpg`
+    *   `sddefault.jpg`
+    *   `hqdefault.jpg`
+    *   `mqdefault.jpg`
+*   Uses `Image(url, options)` from **@11ty/eleventy-img**, which internally relies on **Eleventy Fetch** for caching and remote fetch handling.
+*   If all thumbnails fail, outputs a graceful warning block.
+*   Iframe mode uses:
+    *   `youtube-nocookie.com`
+    *   lazy‑loading
+    *   `allowfullscreen`
+    *   `allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"`
+    *   `referrerpolicy="strict-origin-when-cross-origin"`
+    *   responsive `aspect-ratio: 16/9`
 
-If you want to use tubeFrame in a Node.js script:
+***
 
-```javascript
-const tubeFrame = require('./src/shortcodes/tubeFrame');
+# License
 
-(async () => {
-  const html = await tubeFrame('dQw4w9WgXcQ', true, './images/thumbnails', process.cwd());
-  console.log(html);
-})();
-```
+MIT License 
 
-### Example: Embedding a Video
+***
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Video Example</title>
-</head>
-<body>
-  <h1>My YouTube Video</h1>
-  {% tubeFrame "dQw4w9WgXcQ" %}
-</body>
-</html>
-```
+# Future development ideas
 
-## License
-
-This project is licensed under the MIT License.
-
-## Future Development
-
-- Direct integration with more advanced features of the Eleventy Image plugin ✓
-- Change `thmb` option to allow choosing between different YouTube thumbnail resolutions (e.g., 0-3).✗
-- If *maxresolution* doesn't exist download *default* thumbnail.✓-sort of...implemented fallback
+*   Choose between multiple thumbnail qualities explicitly
+*   Direct integration with Eleventy Image plugin (now partially implemented automatically)
