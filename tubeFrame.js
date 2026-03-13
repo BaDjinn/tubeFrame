@@ -1,86 +1,107 @@
-const path = require("path");
-const fs = require("fs").promises;
-const { fetch } = require("undici");
+/**
+ * tubeFrame — Shortcode 11ty per YouTube (iframe o anteprima ottimizzata)
+ *
+ * Uso:
+ *   {% tubeFrame "VIDEO_ID", false %}  // iframe YouTube (privacy-friendly) con lazy-load
+ *   {% tubeFrame "VIDEO_ID", true %}   // anteprima locale ottimizzata con @11ty/eleventy-img
+ *
+ * Cosa fa:
+ *  - Valida l'ID YouTube (11 caratteri alfanumerici + "_" e "-").
+ *  - Se `thmb === true`: prova più thumbnail in fallback (maxres → sd → hq → mq),
+ *    elabora l’immagine da URL remoto con @11ty/eleventy-img (AVIF/JPEG, width 300/800/orig)
+ *    e restituisce markup responsive <picture> con attributi a11y e performance (lazy/decoding).
+ *  - Se `thmb === false`: genera un <iframe> verso youtube-nocookie.com con title, lazy-load,
+ *    policy e allow moderni, e stile responsive (aspect-ratio 16/9).
+ *
+ * Note:
+ *  - Le immagini vengono salvate in `public/assets/images/` e servite da `/assets/images`.
+ *  - Non usa fetch manuale: demanda caching/retry a eleventy-img/eleventy-fetch.
+ *  - Parametro `sizes` opzionale per controllare il responsive behavior lato <picture>.
+ */
+
 const Image = require("@11ty/eleventy-img");
 
-/**
- * Scarica la thumbnail del video YouTube se non esiste già.
- * @param {string} videoId - ID del video YouTube.
- * @param {string} outputDir - Directory di output per la thumbnail.
- * @returns {Promise<string>} - Percorso del file della thumbnail.
- */
-async function downloadThumbnail(videoId, outputDir) {
-  const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-  const thumbnailPath = path.join(outputDir, `${videoId}.jpg`);
-
-  try {
-    await fs.access(thumbnailPath);
-    console.log(`Thumbnail già presente: ${thumbnailPath}`);
-  } catch {
-    const response = await fetch(thumbnailUrl);
-    if (response.ok) {
-      const buffer = Buffer.from(await response.arrayBuffer());
-      await fs.mkdir(outputDir, { recursive: true });
-      await fs.writeFile(thumbnailPath, buffer);
-      console.log(`Thumbnail scaricata e salvata: ${thumbnailPath}`);
-    } else {
-      throw new Error(`Unable to fetch thumbnail from ${thumbnailUrl}`);
-    }
-  }
-
-  return thumbnailPath;
+function isValidYouTubeId(id) {
+	return /^[a-zA-Z0-9_-]{11}$/.test(id);
 }
 
-/**
- * Shortcode per iframe di YouTube o thumbnail.
- * @param {string} videoId - ID del video YouTube.
- * @param {boolean} [thmb=false] - Se true, mostra la thumbnail invece dell'iframe.
- * @param {string} [outputDir="./public/assets/images"] - Directory di output per le immagini.
- * @param {string} [baseDir=__dirname] - Directory base del progetto.
- * @returns {Promise<string>} - HTML per visualizzare il video o la thumbnail.
- */
-async function tubeFrame(videoId, thmb = false, outputDir = "../public/assets/images", baseDir = __dirname) {
-  const resolvedOutputDir = path.resolve(baseDir, outputDir);
+function buildThumbnailCandidates(videoId) {
+	const bases = [
+		"maxresdefault.jpg",
+		"sddefault.jpg",
+		"hqdefault.jpg",
+		"mqdefault.jpg",
+	];
+	return bases.map((name) => `https://img.youtube.com/vi/${videoId}/${name}`);
+}
 
-  if (thmb) {
-    let thumbnailSrc;
-    try {
-      thumbnailSrc = await downloadThumbnail(videoId, resolvedOutputDir);
+async function getFirstWorkingThumbURL(videoId) {
+	const candidates = buildThumbnailCandidates(videoId);
+	for (const url of candidates) {
+		try {
+			await Image(url, {
+				widths: [300], // basta un probe minimale
+				formats: ["jpeg"],
+				urlPath: "/assets/images",
+				outputDir: "public/assets/images/",
+			});
+			return url;
+		} catch {}
+	}
+	return null;
+}
 
-      // Genera diverse versioni dell'immagine usando EleventyImage
-      let metadata = await Image(thumbnailSrc, {
-        widths: [300, 800, null],
-        formats: ["avif", "jpeg"],
-        urlPath: "/assets/images",
-        outputDir: "public/assets/images/",
-      });
-
-      let imageAttributes = {
-        alt: `Video ${videoId} Thumbnail`,
-        sizes: "(max-width: 1280px) 100vw, 1280px",
-        style: "width: 100%; max-width: 420px;"
-      };
-
-      // Genera l'HTML usando le versioni delle immagini generate
-      let imageHtml = Image.generateHTML(metadata, imageAttributes);
-
-      return `
-        <section class="youtubeFrame">
-          ${imageHtml}
-        </section>
-      `;
-    } catch (error) {
-      console.error("Errore nel download della thumbnail:", error);
-      return `<p>Immagine di anteprima non disponibile.</p>`;
-    }
-  } else {
-    const videoUrl = `https://www.youtube.com/embed/${videoId}`;
-    return `
-      <section class="youtubeFrame">
-        <iframe width="420" height="345" src="${videoUrl}" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-      </section>
+module.exports = async function tubeFrame(
+	videoId,
+	thmb = false,
+	{ sizes = "(max-width: 576px) 100vw, (max-width: 768px) 50vw, 33vw" } = {},
+) {
+	if (!isValidYouTubeId(videoId)) {
+		return `
+      <div role="status" aria-live="polite" class="text-danger">
+        ID video non valido.
+      </div>
     `;
-  }
-}
+	}
 
-module.exports = tubeFrame;
+	if (thmb) {
+		const thumbURL = await getFirstWorkingThumbURL(videoId);
+		if (!thumbURL) {
+			return `
+        <div role="status" aria-live="polite" class="text-warning">
+          Immagine di anteprima non disponibile.
+        </div>
+      `;
+		}
+
+		const metadata = await Image(thumbURL, {
+			widths: [300, 800, null],
+			formats: ["avif", "jpeg"],
+			urlPath: "/assets/images",
+			outputDir: "public/assets/images/",
+		});
+
+		const imageAttributes = {
+			alt: `Anteprima del video ${videoId}`,
+			sizes,
+			loading: "lazy",
+			decoding: "async",
+			class: "img-fluid",
+		};
+
+		return Image.generateHTML(metadata, imageAttributes);
+	}
+
+	const src = `https://www.youtube-nocookie.com/embed/${videoId}`;
+	return `
+    <iframe
+      src="${src}"
+      title="Riproduzione video: ${videoId}"
+      loading="lazy"
+      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"
+      style="width:100%; aspect-ratio:16/9; border:0"
+    ></iframe>
+  `;
+};
